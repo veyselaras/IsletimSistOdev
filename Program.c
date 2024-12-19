@@ -1,3 +1,24 @@
+// Arka plan sürecini listeye ekleme
+void arkaPlanProcessEkle(pid_t pid) {
+    arkaplanProcess_t* yeniProcess = malloc(sizeof(arkaplanProcess_t));
+    yeniProcess->pid = pid;
+    yeniProcess->sonraki = arkaplanListesi;
+    arkaplanListesi = yeniProcess;
+}
+
+// Tüm arka plan süreçlerinin bitmesini beklemek
+void arkplanBekle() {
+    arkaplanProcess_t* suanki = arkaplanListesi;
+    while (suanki) {
+        int durum;
+        waitpid(suanki->pid, &durum, 0);
+        printf("[%d] retval: %d\n", suanki->pid, WEXITSTATUS(durum));
+        arkaplanProcess_t* temp = suanki;
+        suanki = suanki->sonraki;
+        free(temp);
+    }
+}
+
 //Pipe komutlarini yurutmek icin fonksiyon
 int execute_pipe_commands(char** pipeCmd, int pipeSayac, char* globalGirisDosyasi, char* globalCikisDosyasi) {
     int cmdNumara = pipeSayac + 1;
