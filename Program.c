@@ -5,7 +5,7 @@ void arkaPlanProcessEkle(pid_t pid) {
     yeniProcess->sonraki = arkaplanListesi;
     arkaplanListesi = yeniProcess;
 }
-
+//deneme
 // Tüm arka plan süreçlerinin bitmesini beklemek
 void arkplanBekle() {
     arkaplanProcess_t* suanki = arkaplanListesi;
