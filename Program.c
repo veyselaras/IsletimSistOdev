@@ -19,6 +19,80 @@ void arkplanBekle() {
     }
 }
 
+//Increment komutunu calistirmak
+int execute_increment(const char* input_file) {
+    int numara;
+    FILE* girdi = stdin;
+
+    if (input_file) {
+        girdi = fopen(input_file, "r");
+        if (!girdi) {
+            fprintf(stderr, "%s giriş dosyası bulunamadı.\n", input_file);
+            return -1;
+        }
+    }
+
+    if (fscanf(girdi, "%d", &numara) != 1) {
+        fprintf(stderr, "Geçersiz giriş\n");
+        if (input_file) fclose(girdi);
+        return -1;
+    }
+
+    printf("%d\n", numara + 1);
+    fflush(stdout);
+
+    if (input_file) fclose(girdi);
+    return 0;
+}
+
+//Komutalari calistirmak icin fonksiyon
+int execute_command(char** args, char* girisDosyasi, char* cikisDosyasi, int arkaplan) {
+    // "increment" komutu için özel işlem
+    if (strcmp(args[0], "increment") == 0) {
+        return execute_increment(girisDosyasi);
+    }
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        if (girisDosyasi) {
+            int dosya = open(girisDosyasi, O_RDONLY);
+            if (dosya < 0) {
+                fprintf(stderr, "%s giris dosyasi bulunamadi.\n", girisDosyasi);
+                exit(1);
+            }
+            dup2(dosya, STDIN_FILENO);
+            close(dosya);
+        }
+        if (cikisDosyasi) {
+            int dosya = open(cikisDosyasi, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            if (dosya < 0) {
+                perror("output file");
+                exit(1);
+            }
+            dup2(dosya, STDOUT_FILENO);
+            close(dosya);
+        }
+        execvp(args[0], args);
+        perror("exec");
+        fprintf(stderr, "Komut bulunamadi: %s\n", args[0]);
+        exit(1);
+    }
+    else if (pid < 0) {
+        perror("fork");
+        return -1;
+    }
+    else {
+        if (arkaplan) {
+            arkaPlanProcessEkle(pid);
+        }
+        else {
+            int durum;
+            waitpid(pid, &durum, 0);
+        }
+    }
+    return 0;
+}
+
 //Pipe komutlarini yurutmek icin fonksiyon
 int execute_pipe_commands(char** pipeCmd, int pipeSayac, char* globalGirisDosyasi, char* globalCikisDosyasi) {
     int cmdNumara = pipeSayac + 1;
