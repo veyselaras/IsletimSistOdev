@@ -19,6 +19,73 @@ void arkplanBekle() {
     }
 }
 
+//Komutun parse edilmesi
+int parse_command(char* satir, char** args, char** girisDosyasi, char** cikisDosyasi, int* arkaplan, char*** pipeKomutları, int* pipeSayac) {
+    *girisDosyasi = NULL;
+    *cikisDosyasi = NULL;
+    *arkaplan = 0;
+    *pipeSayac = 0;
+    *pipeKomutları = NULL;
+
+    {
+        char* harf = satir;
+        int count = 0;
+        while ((harf = strchr(harf, '|')) != NULL) {
+            count++;
+            harf++;
+        }
+        *pipeSayac = count;
+    }
+
+    if (*pipeSayac > 0) {
+        pipeKomutları = malloc(sizeof(char) * (*pipeSayac + 1));
+        int index = 0;
+        char* kayitPtr;
+        char* token = strtok_r(satir, "|", &kayitPtr);
+        while (token) {
+            (*pipeKomutları)[index++] = strdup(token);
+            token = strtok_r(NULL, "|", &kayitPtr);
+        }
+        return 0;
+    }
+
+    char* kayitPtr;
+    int argc = 0;
+    char* token = strtok_r(satir, " \t", &kayitPtr);
+    while (token && argc < MAX_ARGS - 1) {
+        if (strcmp(token, "<") == 0) {
+            token = strtok_r(NULL, " \t", &kayitPtr);
+            if (token) {
+                *girisDosyasi = token;
+            }
+            else {
+                fprintf(stderr, "Giris dosyasi belirtilmedi.\n");
+                return -1;
+            }
+        }
+        else if (strcmp(token, ">") == 0) {
+            token = strtok_r(NULL, " \t", &kayitPtr);
+            if (token) {
+                *cikisDosyasi = token;
+            }
+            else {
+                fprintf(stderr, "Cikis dosyasi belirtilmedi.\n");
+                return -1;
+            }
+        }
+        else if (strcmp(token, "&") == 0) {
+            *arkaplan = 1;
+        }
+        else {
+            args[argc++] = token;
+        }
+        token = strtok_r(NULL, " \t", &kayitPtr);
+    }
+    args[argc] = NULL;
+
+    return 0;
+}
+
 //Increment komutunu calistirmak
 int execute_increment(const char* input_file) {
     int numara;
